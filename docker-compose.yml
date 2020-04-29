@@ -1,0 +1,77 @@
+version: '3'
+
+services:
+  app:
+    build:
+      context: .
+    ports:
+    - "8000:8000"
+    volumes:
+    - ./app:/app
+    command: >
+      sh -c "python manage.py migrate  &&
+             python manage.py runserver 0.0.0.0:8000"
+    env_file:
+      - ./.env.dev
+    depends_on:
+      - db
+      - redis
+
+  db:
+    image: postgres:10-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_DB=technicalTestDB
+      - POSTGRES_USER=talanaDev
+      - POSTGRES_PASSWORD=dbADMIN1!
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:5.0.7-alpine
+    # command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    # ports:
+    #   - "6379:6379"
+
+  celery:
+    build: .
+    command: celery -A app worker -l info
+    volumes:
+      - ./app:/app
+    env_file:
+      - ./.env.dev
+    depends_on:
+      - app
+      - db
+      - redis
+
+  celery-beat:
+    build: .
+    command: celery -A app beat -l INFO --pidfile= --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    volumes:
+        - ./app:/app
+    env_file:
+      - ./.env.dev
+    depends_on:
+        - app
+        - db
+        - redis
+
+  flower-monitoring:
+    image: mher/flower
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - FLOWER_PORT=5555
+    ports:
+      - "5555:5555"
+    depends_on:
+      - app
+      - db
+      - redis
+
+volumes:
+  postgres_data:
+  redis_data:
