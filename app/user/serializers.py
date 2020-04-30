@@ -3,6 +3,9 @@ from django.utils.translation import ugettext_lazy as _
 
 from rest_framework import serializers
 
+from user.models import Request
+from car.models import Car
+
 
 # ____________________User objects serializers____________________
 
@@ -124,3 +127,65 @@ class AuthTokenSerializer(serializers.Serializer):
 
         attrs['user'] = user
         return attrs
+
+
+# ____________________Request objects serializers____________________
+
+class RequestListSerializer(serializers.ModelSerializer):
+    """Serializes a Request object"""
+    user = serializers.PrimaryKeyRelatedField(
+        queryset=get_user_model().objects.all()
+    )
+    car = serializers.PrimaryKeyRelatedField(
+        queryset=Car.objects.all()
+    )
+    state = serializers.CharField(source='get_state_display')
+
+    class Meta:
+        model = Request
+        fields = (
+            'id',
+            'user',
+            'car',
+            'state'
+        )
+
+
+class RequestSerializer(serializers.ModelSerializer):
+    """Serializes a construction company object"""
+    user = serializers.PrimaryKeyRelatedField(
+        queryset=get_user_model().objects.all()
+    )
+    car = serializers.PrimaryKeyRelatedField(
+        queryset=Car.objects.all()
+    )
+
+    class Meta:
+        model = Request
+        fields = (
+            'id',
+            'user',
+            'car',
+            'retirement_date',
+            'return_date',
+            'state'
+        )
+
+    def create(self, validated_data):
+        """Create and  return  new Request"""
+        request = Request.objects.create(**validated_data)
+        return request
+
+    def update(self, instance, validated_data):
+        """Update a Request object and return it"""
+        request = super().update(instance, validated_data)
+        return request
+
+
+class RequestDetailSerializer(serializers.ModelSerializer):
+    """Serializes a Request object"""
+    state = serializers.CharField(source='get_state_display')
+
+    class Meta:
+        model = Request
+        fields = '__all__'
