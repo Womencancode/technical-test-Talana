@@ -41,7 +41,8 @@ INSTALLED_APPS = [
     'django_celery_beat',
     'rest_framework',
     'rest_framework.authtoken',
-    'user'
+    'user',
+    'car'
 ]
 
 MIDDLEWARE = [
