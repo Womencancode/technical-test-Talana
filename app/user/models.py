@@ -1,4 +1,5 @@
 from django.db import models
+from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser
 from django.contrib.auth.models import PermissionsMixin
 from django.contrib.auth.models import BaseUserManager
@@ -42,6 +43,11 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_available = models.BooleanField(default=True)
     created_on = models.DateTimeField(auto_now_add=True)
     updated_on = models.DateTimeField(auto_now=True)
+    requests = models.ManyToManyField(
+        'car.Car',
+        through='Request',
+        through_fields=('user', 'car'),
+    )
 
     objects = UserManager()
 
@@ -59,3 +65,29 @@ class User(AbstractBaseUser, PermissionsMixin):
     def __str__(self):
         """Retrieve String representation of our user"""
         return self.email
+
+
+class Request(models.Model):
+    """Database model for Request in the system"""
+    PENDING = 'PE'
+    APPROVED = 'AD'
+    REJECTED = 'RE'
+    STATE_CHOICES = [
+        (PENDING, 'Pendiente'),
+        (APPROVED, 'Aprobado'),
+        (REJECTED, 'Rechazado')
+    ]
+    state = models.CharField(max_length=2,
+                             choices=STATE_CHOICES,
+                             blank=True,
+                             default=PENDING)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL,
+                             on_delete=models.CASCADE,
+                             blank=False)
+    car = models.ForeignKey('car.Car',
+                            on_delete=models.CASCADE,
+                            blank=False)
+    retirement_date = models.DateTimeField(blank=False, null=True)
+    return_date = models.DateTimeField(blank=False, null=True)
+    created_on = models.DateTimeField(auto_now_add=True)
+    updated_on = models.DateTimeField(auto_now=True)
