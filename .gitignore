@@ -141,3 +141,5 @@ dmypy.json
 
 ### Vagrant Patch ###
 *.box
+
+*.env
